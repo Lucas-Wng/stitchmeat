@@ -1,7 +1,10 @@
 uniform float time;
+
+attribute vec3 finalColor;
 attribute float age;
 
-varying vec3 vColor;
+varying vec3 vColor; // auto from Three.js
+varying vec3 vFinalScarColor;
 varying float vAge;
 varying float vGlowPulse;
 
@@ -15,13 +18,12 @@ float noise(vec2 x) {
 }
 
 void main() {
-  vColor = color;
+  vColor = color; // uses Three.js automatic color attribute
+  vFinalScarColor = finalColor;
   vAge = age;
 
-  // Organic glow flicker from time + position
   float pulse = sin(time * 4.0 + position.y * 10.0) * 0.5 + 0.5;
   float flicker = noise(position.xy * 4.0 + time * 0.8);
-
   vGlowPulse = pulse * 0.6 + flicker * 0.4;
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);

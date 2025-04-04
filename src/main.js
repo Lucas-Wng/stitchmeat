@@ -14,17 +14,18 @@ renderer.setClearColor(0xffffff, 1);
 document.body.appendChild(renderer.domElement);
 renderer.autoClear = true;
 
-// === Load Texture ===
-const loader = new THREE.TextureLoader();
-const texture = loader.load('/textures/crumbling.jpg');
-
-// === ShaderMaterial from external GLSL files ===
+// === Background Shader Material ===
 const backgroundMaterial = new THREE.ShaderMaterial({
-  uniforms: {
-    uTexture: { value: texture }
-  },
   vertexShader: backgroundVertex,
-  fragmentShader: backgroundFragment
+  fragmentShader: backgroundFragment,
+  uniforms: {
+    uTime: { value: 0 },
+    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+    // uTexture: { value: texture } // Uncomment if your fragment shader actually uses it
+  },
+  depthWrite: false,
+  depthTest: false,
+  side: THREE.DoubleSide
 });
 
 const backgroundPlane = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), backgroundMaterial);
@@ -32,7 +33,7 @@ backgroundPlane.position.z = -10;
 backgroundPlane.renderOrder = -999;
 scene.add(backgroundPlane);
 
-// === Add Cloth Layer ===
+// === Cloth Layer ===
 const cloth = createClothSimulation(scene, camera, () => {
   // optional distortion callback
 });
@@ -41,6 +42,19 @@ const cloth = createClothSimulation(scene, camera, () => {
 function animate() {
   requestAnimationFrame(animate);
   cloth.update();
+  backgroundMaterial.uniforms.uTime.value = performance.now() * 0.001;
   renderer.render(scene, camera);
 }
 animate();
+
+// === Responsive Resize ===
+window.addEventListener('resize', () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(width, height);
+  backgroundMaterial.uniforms.uResolution.value.set(width, height);
+});
