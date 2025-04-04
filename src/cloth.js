@@ -7,9 +7,9 @@ import vertexShader from './shaders/cloth_vertex.glsl?raw';
 import fragmentShader from './shaders/cloth_fragment.glsl?raw';
 
 export function createClothSimulation(scene, camera, onTearCallback) {
-  const clothWidth = 400, clothHeight = 50, spacing = 0.3;
-  const gravity = new THREE.Vector3(0, -0.03, 0);
-  const stiffness = 0.95, damping = 0.95;
+  const clothWidth = 400, clothHeight = 60, spacing = 0.3;
+  const gravity = new THREE.Vector3(0, -0.02, 0);
+  const stiffness = 0.95, damping = 0.98;
   const totalParticles = (clothWidth + 1) * (clothHeight + 1);
 
   const particles = new Array(totalParticles);
@@ -92,7 +92,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
       if (!broken.length) return;
 
       const now = performance.now();
-      const eligible = broken.filter(b => now - b.time >= 800 + Math.random() * 900);
+      const eligible = broken.filter(b => now - b.time >= 800 + Math.random() * 500);
       if (!eligible.length) return;
 
       const count = 2 + Math.floor(Math.random() * 4);
@@ -107,14 +107,21 @@ export function createClothSimulation(scene, camera, onTearCallback) {
         const restNoise = spacing * (0.5 + Math.random() * 1.5);
 
         let hue;
+        let saturation, lightness;
+
         if (Math.random() < 0.85) {
-          hue = 0.0 + Math.random() * 0.04;
+          // Brighter, richer reds
+          hue = 0.0 + Math.random() * 0.03;
+          saturation = 0.85 + Math.random() * 0.15;    // boost richness
+          lightness = 0.2 + Math.random() * 0.15;      // slightly brighter
         } else {
+          // Sickly infected tones
           hue = 0.11 + Math.random() * 0.07;
+          saturation = 0.7 + Math.random() * 0.2;
+          lightness = 0.12 + Math.random() * 0.15;
         }
-        const saturation = 0.7 + Math.random() * 0.2;
-        const lightness = 0.12 + Math.random() * 0.15;
         const pulseColor = new THREE.Color().setHSL(hue, saturation, lightness);
+
 
         Object.assign(constraint, {
           rest: restNoise,
@@ -191,7 +198,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
               Math.random(), 1, 0.03 + Math.random() * 0.07
             );
 
-            const stiffness = 0.8 + Math.random() * 0.2;
+            const stiffness = 0.07 + Math.random() * 0.2;
             const newConstraint = new Constraint(anchor, noisy, d, stiffness, scarColor.getHex());
             newConstraint.createdAt = now;
             newConstraint.finalScarColor = scarColor.clone();

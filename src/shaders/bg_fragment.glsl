@@ -2,6 +2,7 @@ uniform sampler2D uTexture;
 uniform sampler2D uDistortionMap;
 uniform float uTime;
 uniform vec2 uResolution;
+
 varying vec2 vUv;
 
 void main() {
@@ -12,22 +13,22 @@ void main() {
   // Distance from center (for vignette + glow)
   float dist = length(center);
 
-  // Subtle pulsating glow at center
-  float pulse = 0.2 + 0.1 * sin(uTime * 0.5);
+  // Pulsing soft glow
+  float pulse = 0.2 + 0.1 * sin(uTime * 0.8);
   float glow = smoothstep(0.3 + pulse, 0.0, dist);
 
-  // Base background color (deep blood red)
-  vec3 baseColor = vec3(0.07, 0.02, 0.02);
+  // Vignette (light gray → white toward center)
+  float vignette = smoothstep(1.5, 0.6, dist);
 
-  // Glow color
-  vec3 glowColor = vec3(0.4, 0.05, 0.1); // crimson glow
+  // Slightly warm off-white base
+  vec3 baseColor = vec3(0.98, 0.96, 0.95);
 
-  // Combine glow and base
-  vec3 color = mix(baseColor, glowColor, glow);
+  // Glow adds warmth to center
+  vec3 glowColor = vec3(1.0, 0.94, 0.9); // subtle rose-beige tone
+  vec3 color = mix(baseColor, glowColor, glow * 0.5);
 
-  // Vignette fade to black
-  float vignette = smoothstep(1.0, 0.4, dist);
+  // Apply vignette darkening subtly
   color *= vignette;
 
-  gl_FragColor = vec4(1,1,1, 1.0);
+  gl_FragColor = vec4(color, 1.0);
 }
