@@ -1,37 +1,48 @@
-import * as THREE from 'three';
-import { Particle } from './particle.js';
-import { Constraint } from './constraint.js';
-import { Quadtree } from './quadtree.js';
-import { initAudio, playTearSound, playRegenSound } from './audio.js';
-import vertexShader from './shaders/cloth_vertex.glsl?raw';
-import fragmentShader from './shaders/cloth_fragment.glsl?raw';
+import * as THREE from "three";
+import { Particle } from "./particle.js";
+import { Constraint } from "./constraint.js";
+import { Quadtree } from "./quadtree.js";
+import { initAudio, playTearSound, playRegenSound } from "./audio.js";
+import vertexShader from "./shaders/cloth_vertex.glsl?raw";
+import fragmentShader from "./shaders/cloth_fragment.glsl?raw";
 
 export function createClothSimulation(scene, camera, onTearCallback) {
-  const clothWidth = 400, clothHeight = 60, spacing = 0.3;
-  const gravity = new THREE.Vector3(0, -0.02, 0);
-  const stiffness = 0.95, damping = 0.98;
+  const clothWidth = 400,
+    clothHeight = 120,
+    spacing = 0.3;
+  const gravity = new THREE.Vector3(0, -0.025, 0);
+  const stiffness = 0.95,
+    damping = 0.97;
   const totalParticles = (clothWidth + 1) * (clothHeight + 1);
 
   const particles = new Array(totalParticles);
   const constraints = [];
   const broken = [];
 
-  const offsetX = -clothWidth * spacing / 2;
-  const offsetY = clothHeight * spacing / 2 + 25;
+  const offsetX = (-clothWidth * spacing) / 2;
+  const offsetY = (clothHeight * spacing) / 2 + 30;
 
-  const attractors = [ { x: 50, y: 0 }, { x: 200, y: 0 }, { x: 350, y: 0 } ];
+  const attractors = [
+    { x: 20, y: 10 },
+    { x: 200, y: 15 },
+    { x: 380, y: 12 },
+    { x: 120, y: 45 },
+    { x: 280, y: 50 },
+  ];
+  
 
   function createParticlesAndConstraints() {
     let index = 0;
     for (let y = 0; y <= clothHeight; y++) {
       const yRatio = y / clothHeight;
       for (let x = 0; x <= clothWidth; x++, index++) {
-        const xTaper = ((x / clothWidth) - 0.5) * spacing * clothWidth;
+        const xTaper = (x / clothWidth - 0.5) * spacing * clothWidth;
         const taperedX = xTaper * (1 + yRatio * 1.5);
         const p = new Particle(taperedX, -y * spacing + offsetY, 0, damping);
 
         for (const attractor of attractors) {
-          const dx = x - attractor.x, dy = y - attractor.y;
+          const dx = x - attractor.x,
+            dy = y - attractor.y;
           const dist = Math.hypot(dx, dy);
           if (dist < 10 && Math.random() > dist / 10) p.pin();
         }
@@ -66,9 +77,9 @@ export function createClothSimulation(scene, camera, onTearCallback) {
       for (const c of constraints) {
         if (!c.active) continue;
         mid.addVectors(c.p1.position, c.p2.position).multiplyScalar(0.5);
-        if (raycaster.ray.distanceToPoint(mid) < 0.4) {
+        if (raycaster.ray.distanceToPoint(mid) < 0.5) {
           c.active = false;
-          if (!broken.some(b => b.constraint === c)) {
+          if (!broken.some((b) => b.constraint === c)) {
             broken.push({ constraint: c, time: performance.now() });
             onTearCallback(mid.clone());
             playTearSound();
@@ -77,14 +88,18 @@ export function createClothSimulation(scene, camera, onTearCallback) {
       }
     };
 
-    window.addEventListener('mousedown', () => {
-      initAudio();
-      isMouseDown = true;
-    }, { once: true });
+    window.addEventListener(
+      "mousedown",
+      () => {
+        initAudio();
+        isMouseDown = true;
+      },
+      { once: true }
+    );
 
-    window.addEventListener('mousedown', () => isMouseDown = true);
-    window.addEventListener('mouseup', () => isMouseDown = false);
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener("mousedown", () => (isMouseDown = true));
+    window.addEventListener("mouseup", () => (isMouseDown = false));
+    window.addEventListener("mousemove", handleMouseMove);
   }
 
   function regenerateConstraints() {
@@ -92,7 +107,9 @@ export function createClothSimulation(scene, camera, onTearCallback) {
       if (!broken.length) return;
 
       const now = performance.now();
-      const eligible = broken.filter(b => now - b.time >= 800 + Math.random() * 500);
+      const eligible = broken.filter(
+        (b) => now - b.time >= 800 + Math.random() * 500
+      );
       if (!eligible.length) return;
 
       const count = 2 + Math.floor(Math.random() * 4);
@@ -112,8 +129,8 @@ export function createClothSimulation(scene, camera, onTearCallback) {
         if (Math.random() < 0.85) {
           // Brighter, richer reds
           hue = 0.0 + Math.random() * 0.03;
-          saturation = 0.85 + Math.random() * 0.15;    // boost richness
-          lightness = 0.2 + Math.random() * 0.15;      // slightly brighter
+          saturation = 0.85 + Math.random() * 0.15; // boost richness
+          lightness = 0.2 + Math.random() * 0.15; // slightly brighter
         } else {
           // Sickly infected tones
           hue = 0.11 + Math.random() * 0.07;
@@ -122,25 +139,28 @@ export function createClothSimulation(scene, camera, onTearCallback) {
         }
         const pulseColor = new THREE.Color().setHSL(hue, saturation, lightness);
 
-
         Object.assign(constraint, {
           rest: restNoise,
           color: pulseColor.getHex(),
           active: true,
           createdAt: now,
-          finalScarColor: pulseColor.clone()
+          finalScarColor: pulseColor.clone(),
         });
 
         const jitterStrength = 0.15 + Math.random() * 0.08;
-        constraint.p1.position.addScalar((Math.random() - 0.5) * jitterStrength);
-        constraint.p2.position.addScalar((Math.random() - 0.5) * jitterStrength);
+        constraint.p1.position.addScalar(
+          (Math.random() - 0.5) * jitterStrength
+        );
+        constraint.p2.position.addScalar(
+          (Math.random() - 0.5) * jitterStrength
+        );
 
         if (constraint.scarTrail) {
           constraint.scarTrail.push({
             time: now,
             color: pulseColor.clone(),
             pos1: constraint.p1.position.clone(),
-            pos2: constraint.p2.position.clone()
+            pos2: constraint.p2.position.clone(),
           });
         }
 
@@ -149,13 +169,13 @@ export function createClothSimulation(scene, camera, onTearCallback) {
 
         const anchor = Math.random() < 0.5 ? constraint.p1 : constraint.p2;
         const quadtree = new Quadtree({ x: -60, y: 60, w: 120, h: 120 });
-        particles.forEach(p => quadtree.insert(p));
+        particles.forEach((p) => quadtree.insert(p));
 
         let local = quadtree.query({
           x: anchor.position.x - 5,
           y: anchor.position.y + 5,
           w: 10,
-          h: 10
+          h: 10,
         });
 
         if (local.length < 3) {
@@ -163,15 +183,16 @@ export function createClothSimulation(scene, camera, onTearCallback) {
             x: anchor.position.x - 10,
             y: anchor.position.y + 10,
             w: 20,
-            h: 20
+            h: 20,
           });
         }
 
         const clusters = 9 + Math.floor(Math.random() * 8);
         for (let c = 0; c < clusters; c++) {
-          let partner = (Math.random() < 0.95 && local.length)
-            ? local[Math.floor(Math.random() * local.length)]
-            : null;
+          let partner =
+            Math.random() < 0.95 && local.length
+              ? local[Math.floor(Math.random() * local.length)]
+              : null;
 
           if (!partner || partner === anchor || partner.pinned) continue;
 
@@ -190,16 +211,24 @@ export function createClothSimulation(scene, camera, onTearCallback) {
 
             const noisy = {
               position: partner.position.clone().add(offset),
-              pinned: false
+              pinned: false,
             };
 
             const d = anchor.position.distanceTo(noisy.position);
             const scarColor = new THREE.Color().setHSL(
-              Math.random(), 1, 0.03 + Math.random() * 0.07
+              Math.random(),
+              1,
+              0.03 + Math.random() * 0.07
             );
 
             const stiffness = 0.07 + Math.random() * 0.2;
-            const newConstraint = new Constraint(anchor, noisy, d, stiffness, scarColor.getHex());
+            const newConstraint = new Constraint(
+              anchor,
+              noisy,
+              d,
+              stiffness,
+              scarColor.getHex()
+            );
             newConstraint.createdAt = now;
             newConstraint.finalScarColor = scarColor.clone();
 
@@ -209,8 +238,18 @@ export function createClothSimulation(scene, camera, onTearCallback) {
               const loop = local[Math.floor(Math.random() * local.length)];
               if (loop !== partner && loop !== anchor) {
                 const loopD = anchor.position.distanceTo(loop.position);
-                const loopColor = new THREE.Color().setHSL(Math.random(), 1, 0.05 + Math.random() * 0.1);
-                const loopConstraint = new Constraint(anchor, loop, loopD, stiffness, loopColor.getHex());
+                const loopColor = new THREE.Color().setHSL(
+                  Math.random(),
+                  1,
+                  0.05 + Math.random() * 0.1
+                );
+                const loopConstraint = new Constraint(
+                  anchor,
+                  loop,
+                  loopD,
+                  stiffness,
+                  loopColor.getHex()
+                );
                 loopConstraint.createdAt = now;
                 loopConstraint.finalScarColor = loopColor.clone();
                 constraints.push(loopConstraint);
@@ -233,10 +272,13 @@ export function createClothSimulation(scene, camera, onTearCallback) {
   const finalColors = new Float32Array(maxSegments * 2 * 3); // new
   const ages = new Float32Array(maxSegments * 2);
 
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  geometry.setAttribute('finalColor', new THREE.BufferAttribute(finalColors, 3)); // new
-  geometry.setAttribute('age', new THREE.BufferAttribute(ages, 1));
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute(
+    "finalColor",
+    new THREE.BufferAttribute(finalColors, 3)
+  ); // new
+  geometry.setAttribute("age", new THREE.BufferAttribute(ages, 1));
 
   const material = new THREE.ShaderMaterial({
     vertexShader,
@@ -244,13 +286,38 @@ export function createClothSimulation(scene, camera, onTearCallback) {
     uniforms: { time: { value: 0 } },
     vertexColors: true,
     transparent: true,
-    depthWrite: false
+    depthWrite: false,
   });
 
+  // === Create and Add Cloth Line Mesh ===
   const mesh = new THREE.LineSegments(geometry, material);
+  mesh.frustumCulled = false;
+  mesh.castShadow = true; // optional, but LineSegments usually don't cast shadows
   scene.add(mesh);
 
+  // === Shadow Proxy Mesh (for casting shadows) ===
+  const shadowGeo = new THREE.PlaneGeometry(
+    clothWidth * spacing,
+    clothHeight * spacing,
+    20,
+    20
+  );
+  const shadowMat = new THREE.MeshStandardMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.15, // slightly higher for more visible shadow
+  });
+  const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+  shadowMesh.rotation.x = -Math.PI / 2;
+  shadowMesh.position.y = offsetY - (clothHeight * spacing) / 2;
+  shadowMesh.castShadow = true;
+  shadowMesh.receiveShadow = false;
+  scene.add(shadowMesh);
+
+  // === Return Simulation Interface ===
   return {
+    mesh,
+    shadowMesh,
     update() {
       const now = performance.now();
       material.uniforms.time.value = now * 0.001;
@@ -275,13 +342,16 @@ export function createClothSimulation(scene, camera, onTearCallback) {
         color.setHex(c.color);
         const age = c.createdAt ? (now - c.createdAt) / 1000 : 0;
 
-        [c.p1, c.p2].forEach(p => {
+        [c.p1, c.p2].forEach((p) => {
           positions.set(p.position.toArray(), index * 3);
           colors.set([color.r, color.g, color.b], index * 3);
           ages[index] = age;
 
           finalColor.copy(c.finalScarColor || color);
-          finalColors.set([finalColor.r, finalColor.g, finalColor.b], index * 3);
+          finalColors.set(
+            [finalColor.r, finalColor.g, finalColor.b],
+            index * 3
+          );
 
           index++;
         });
@@ -292,6 +362,6 @@ export function createClothSimulation(scene, camera, onTearCallback) {
       geometry.attributes.color.needsUpdate = true;
       geometry.attributes.finalColor.needsUpdate = true;
       geometry.attributes.age.needsUpdate = true;
-    }
+    },
   };
 }

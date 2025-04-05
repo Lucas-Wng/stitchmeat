@@ -40,7 +40,7 @@ void main() {
   float crackiness = smoothstep(0.4, 0.9, scarNoise) * 0.5;
 
   // Subtle mid-age bruise tint
-  vec3 bruiseColor = vec3(0.12, 0.03, 0.06);
+  vec3 bruiseColor = vec3(0.18, 0.03, 0.06);
   float bruiseFactor = exp(-pow((vAge - 6.0) / 4.0, 2.0));
   vec3 bruised = mix(vFinalScarColor, bruiseColor, bruiseFactor * 0.5);
 
