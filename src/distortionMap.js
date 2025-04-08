@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from "three";
 
 export function createDistortionMap(size) {
   const data = new Uint8Array(size * size * 3);
@@ -8,8 +8,8 @@ export function createDistortionMap(size) {
 }
 
 export function updateDistortionMap(position, { data, size, texture }) {
-  const u = Math.floor((position.x + 40) / 80 * size);
-  const v = Math.floor((40 - position.y) / 80 * size);
+  const u = Math.floor(((position.x + 40) / 80) * size);
+  const v = Math.floor(((40 - position.y) / 80) * size);
   const r = 3;
   for (let dy = -r; dy <= r; dy++) {
     for (let dx = -r; dx <= r; dx++) {
