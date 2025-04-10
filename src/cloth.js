@@ -2,13 +2,13 @@ import * as THREE from "three";
 import { Particle } from "./particle.js";
 import { Constraint } from "./constraint.js";
 import { Quadtree } from "./quadtree.js";
-import { initAudio, playTearSound, playRegenSound } from "./audio.js";
+import { initAudio, playTearSound, playRegenSound, playBgSound, distortBgSound} from "./audio.js";
 import vertexShader from "./shaders/cloth_vertex.glsl?raw";
 import fragmentShader from "./shaders/cloth_fragment.glsl?raw";
 
 export function createClothSimulation(scene, camera, onTearCallback) {
   const clothWidth = 500,
-    clothHeight = 120,
+    clothHeight = 130,
     spacing = 0.3;
   const gravity = new THREE.Vector3(0, -0.025, 0);
   const stiffness = 0.95,
@@ -23,19 +23,20 @@ export function createClothSimulation(scene, camera, onTearCallback) {
   const offsetY = (clothHeight * spacing) / 2 + 40;
 
   const attractors = [
-    { x: 50, y: 70 },
+    { x: 60, y: 70 },
     { x: 70, y: 10 },
     { x: 250, y: 15 },
     { x: 430, y: 12 },
     { x: 170, y: 45 },
     { x: 330, y: 59 },
-    { x: 450, y: 68 },
+    { x: 440, y: 68 },
   ];
 
   // A temporary vector for reuse in mouseMove calculations.
   const tempMid = new THREE.Vector3();
 
-  // Flag to ensure audio is initialized only once.
+  // Flag to ensure audio is initialized only once in the mouse handler.
+  // (This flag still exists if the user interacts with the simulation)
   let isAudioInitialized = false;
   let isMouseDown = false;
 
@@ -44,7 +45,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
     for (let y = 0; y <= clothHeight; y++) {
       const yRatio = y / clothHeight;
       for (let x = 0; x <= clothWidth; x++, index++) {
-        // Apply tapering without new Vector allocations.
+        // Apply tapering without new vector allocations.
         const xTaper = (x / clothWidth - 0.5) * spacing * clothWidth;
         const taperedX = xTaper * (1 + yRatio * 1.5);
         const p = new Particle(taperedX, -y * spacing + offsetY, 0, damping);
@@ -80,6 +81,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
     const mouse = new THREE.Vector2();
 
     const handleMouseDown = (e) => {
+      // Initialize audio on a user gesture if not already done.
       if (!isAudioInitialized) {
         initAudio();
         isAudioInitialized = true;
@@ -108,6 +110,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
             broken.push({ constraint: c, time: performance.now() });
             onTearCallback(tempMid.clone());
             playTearSound();
+            distortBgSound();
           }
         }
       }
@@ -124,7 +127,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
 
         const now = performance.now();
         const eligible = broken.filter(
-          (b) => now - b.time >= 800 + Math.random() * 500,
+          (b) => now - b.time >= 800 + Math.random() * 500
         );
         if (!eligible.length) return;
 
@@ -141,9 +144,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
           if (!b) continue;
 
           const { constraint } = b;
-          const dist = constraint.p1.position.distanceTo(
-            constraint.p2.position,
-          );
+          const dist = constraint.p1.position.distanceTo(constraint.p2.position);
           if (dist > spacing * 100) continue;
 
           const restNoise = spacing * (0.5 + Math.random() * 1.5);
@@ -161,7 +162,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
           const pulseColor = new THREE.Color().setHSL(
             hue,
             saturation,
-            lightness,
+            lightness
           );
 
           Object.assign(constraint, {
@@ -228,7 +229,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
               const offset = new THREE.Vector3(
                 Math.cos(angle) * radius,
                 Math.sin(angle) * radius,
-                (Math.random() - 0.5) * 0.4,
+                (Math.random() - 0.5) * 0.4
               );
 
               const noisy = {
@@ -240,7 +241,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
               const scarColor = new THREE.Color().setHSL(
                 Math.random(),
                 1,
-                0.03 + Math.random() * 0.07,
+                0.03 + Math.random() * 0.07
               );
               const stiffness = 0.07 + Math.random() * 0.2;
               const newConstraint = new Constraint(
@@ -248,7 +249,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
                 noisy,
                 d,
                 stiffness,
-                scarColor.getHex(),
+                scarColor.getHex()
               );
               newConstraint.createdAt = now;
               newConstraint.finalScarColor = scarColor.clone();
@@ -262,14 +263,14 @@ export function createClothSimulation(scene, camera, onTearCallback) {
                   const loopColor = new THREE.Color().setHSL(
                     Math.random(),
                     1,
-                    0.05 + Math.random() * 0.1,
+                    0.05 + Math.random() * 0.1
                   );
                   const loopConstraint = new Constraint(
                     anchor,
                     loop,
                     loopD,
                     stiffness,
-                    loopColor.getHex(),
+                    loopColor.getHex()
                   );
                   loopConstraint.createdAt = now;
                   loopConstraint.finalScarColor = loopColor.clone();
@@ -280,7 +281,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
           }
         }
       },
-      50 + Math.random() * 60,
+      50 + Math.random() * 60
     );
   }
 
@@ -298,10 +299,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
 
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  geometry.setAttribute(
-    "finalColor",
-    new THREE.BufferAttribute(finalColors, 3),
-  );
+  geometry.setAttribute("finalColor", new THREE.BufferAttribute(finalColors, 3));
   geometry.setAttribute("age", new THREE.BufferAttribute(ages, 1));
 
   const material = new THREE.ShaderMaterial({
@@ -323,7 +321,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
     clothWidth * spacing,
     clothHeight * spacing,
     20,
-    20,
+    20
   );
   const shadowMat = new THREE.MeshStandardMaterial({
     color: 0x000000,
@@ -334,15 +332,24 @@ export function createClothSimulation(scene, camera, onTearCallback) {
   shadowMesh.rotation.x = -Math.PI / 2;
   shadowMesh.position.y = offsetY - (clothHeight * spacing) / 2;
   shadowMesh.castShadow = true;
-  shadowMesh.receiveShadow = false;
+  shadowMesh.receiveShadow = true;
   scene.add(shadowMesh);
+
+  // Automatically initialize audio and play background sound when the cloth simulation is created.
+  initAudio()
+    .then(() => {
+      playBgSound();
+    })
+    .catch((err) => {
+      console.error("Failed to initialize audio:", err);
+    });
 
   // === Return the Simulation Interface ===
   // Preallocate temporary variables for update to avoid per-iteration allocations.
   const tempPos = new THREE.Vector3();
   const color = new THREE.Color();
   const finalColor = new THREE.Color();
-  // Reuse a quadtree instance in the update loop (if your Quadtree supports a clear method)
+  // Reuse a quadtree instance in the update loop.
   let simulationQuadtree = new Quadtree({ x: -40, y: 60, w: 80, h: 80 });
 
   return {
@@ -352,14 +359,12 @@ export function createClothSimulation(scene, camera, onTearCallback) {
       const now = performance.now();
       material.uniforms.time.value = now * 0.001;
 
-      // If your Quadtree implementation supports clearing, do so instead of re-instantiation.
       if (simulationQuadtree.clear) {
         simulationQuadtree.clear();
       } else {
         simulationQuadtree = new Quadtree({ x: -40, y: 60, w: 80, h: 80 });
       }
 
-      // Use traditional for-loops for faster iteration over many particles.
       for (let i = 0, len = particles.length; i < len; i++) {
         const p = particles[i];
         p.addForce(gravity);
@@ -367,7 +372,6 @@ export function createClothSimulation(scene, camera, onTearCallback) {
         simulationQuadtree.insert(p);
       }
 
-      // Run constraint satisfaction iterations with a standard indexed loop.
       for (let iter = 0; iter < 5; iter++) {
         for (let i = 0, clen = constraints.length; i < clen; i++) {
           constraints[i].satisfy();
@@ -375,14 +379,12 @@ export function createClothSimulation(scene, camera, onTearCallback) {
       }
 
       let index = 0;
-      // Update buffer attributes manually to avoid extra allocations
       for (let i = 0, clen = constraints.length; i < clen; i++) {
         const c = constraints[i];
         if (!c.active) continue;
         color.setHex(c.color);
         const age = c.createdAt ? (now - c.createdAt) / 1000 : 0;
 
-        // Manually write the components of each particle’s position instead of using toArray()
         const pts = [c.p1, c.p2];
         for (let j = 0; j < 2; j++) {
           tempPos.copy(pts[j].position);
