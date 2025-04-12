@@ -6,7 +6,9 @@ import { setupLighting } from "./lighting.js";
 import { createWalls, createGround } from "./walls.js";
 import { setupBlood, spawnRandomBloodSplatter, updateBloodSplats } from "./blood.js";
 
-// === Scene Setup ===
+
+
+
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
   60,
@@ -27,45 +29,98 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 renderer.autoClear = true;
 
-// === Clock for Uniform Updates ===
+
+
+
 const clock = new THREE.Clock();
 
-// === Setup Lighting ===
+
 setupLighting(scene, renderer);
 
-// === Create Walls and Ground ===
+
 createWalls(scene);
 createGround(scene);
 
-// === Setup Blood Texture/Material ===
+
+
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+
+const canvasWidth = 512;
+const canvasHeight = 256;
+canvas.width = canvasWidth;
+canvas.height = canvasHeight;
+
+
+ctx.fillStyle = '#ffffff';
+ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+
+ctx.fillStyle = '#000000';
+ctx.font = 'bold 70px Frutiger';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('stitchmeat', canvasWidth / 2, canvasHeight / 2);
+
+
+const labelTexture = new THREE.CanvasTexture(canvas);
+labelTexture.encoding = THREE.sRGBEncoding;
+labelTexture.needsUpdate = true;
+
+
+const labelMaterial = new THREE.MeshStandardMaterial({
+  map: labelTexture,
+  transparent: false,
+  depthWrite: true,
+});
+
+
+const labelWidth = 8;
+const labelHeight = 5;
+const labelMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(labelWidth, labelHeight),
+  labelMaterial
+);
+
+
+labelMesh.position.set(25, -29, 34);
+labelMesh.rotation.set(THREE.MathUtils.degToRad(-30), 0, 0);
+labelMesh.renderOrder = 1;
+
+labelMesh.castShadow = true;
+labelMesh.receiveShadow = true;
+
+scene.add(labelMesh);
+
+
 setupBlood();
 
-// Global tear counter (example variable)
+
 let tearCount = 0;
 
-// === Cloth Simulation ===
+
 const cloth = createClothSimulation(scene, camera, () => {
-  // Spawn a blood splat whenever the cloth simulation triggers the event.
+  
   spawnRandomBloodSplatter(scene, clock);
 });
 
-// === Animation Loop ===
+
 let nextFlickerTime = 0;
 let isFlickering = false;
 let flickerDuration = 0;
 let flickerStartTime = 0;
-const baseIntensity = 2.3; // original intensity for keyLight
+const baseIntensity = 2.3; 
 
 const keyLight = scene.userData.keyLight;
 
 function animate() {
   requestAnimationFrame(animate);
   const elapsed = clock.getElapsedTime();
-
-  // Update blood splats to darken over time.
+  
+  
   updateBloodSplats(clock);
 
-  // Flicker keyLight intensity based on tearCount if applicable.
+  
   if (tearCount > 0 && elapsed > nextFlickerTime && !isFlickering) {
     const flickerProbability = Math.min(0.3 * tearCount, 1.0);
     if (Math.random() < flickerProbability) {
@@ -87,7 +142,7 @@ function animate() {
     keyLight.intensity = baseIntensity;
   }
 
-  // Update cloth simulation.
+  
   cloth.update();
   renderer.render(scene, camera);
 }

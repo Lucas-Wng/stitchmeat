@@ -2,17 +2,23 @@ import * as THREE from "three";
 import { Particle } from "./particle.js";
 import { Constraint } from "./constraint.js";
 import { Quadtree } from "./quadtree.js";
-import { initAudio, playTearSound, playRegenSound, playBgSound, distortBgSound} from "./audio.js";
+import {
+  initAudio,
+  playTearSound,
+  playRegenSound,
+  playBgSound,
+  distortBgSound,
+} from "./audio.js";
 import vertexShader from "./shaders/cloth_vertex.glsl?raw";
 import fragmentShader from "./shaders/cloth_fragment.glsl?raw";
 
 export function createClothSimulation(scene, camera, onTearCallback) {
   const clothWidth = 500,
     clothHeight = 130,
-    spacing = 0.3;
-  const gravity = new THREE.Vector3(0, -0.025, 0);
-  const stiffness = 0.95,
-    damping = 0.97;
+    spacing = 0.2;
+  const gravity = new THREE.Vector3(0, -0.07, 0);
+  const stiffness = 1.0,
+    damping = 0.94;
   const totalParticles = (clothWidth + 1) * (clothHeight + 1);
 
   const particles = new Array(totalParticles);
@@ -30,13 +36,38 @@ export function createClothSimulation(scene, camera, onTearCallback) {
     { x: 170, y: 45 },
     { x: 330, y: 59 },
     { x: 440, y: 68 },
+    { x: 60, y: 71 },
+    { x: 70, y: 11 },
+    { x: 250, y: 16 },
+    { x: 430, y: 13 },
+    { x: 170, y: 46 },
+    { x: 330, y: 60 },
+    { x: 440, y: 69 },
+    { x: 60, y: 69 },
+    { x: 70, y: 9 },
+    { x: 250, y: 14 },
+    { x: 430, y: 11 },
+    { x: 170, y: 44 },
+    { x: 330, y: 58 },
+    { x: 440, y: 67 },
+    { x: 60, y: 68 },
+    { x: 70, y: 8 },
+    { x: 250, y: 13 },
+    { x: 430, y: 10 },
+    { x: 170, y: 43 },
+    { x: 330, y: 57 },
+    { x: 440, y: 66 },
   ];
+  for (let i = 0; i < attractors.length; i++) {
+    const a = attractors[i];
+    a.y = a.y + 30;
+  }
 
-  // A temporary vector for reuse in mouseMove calculations.
+  
   const tempMid = new THREE.Vector3();
 
-  // Flag to ensure audio is initialized only once in the mouse handler.
-  // (This flag still exists if the user interacts with the simulation)
+  
+  
   let isAudioInitialized = false;
   let isMouseDown = false;
 
@@ -45,21 +76,22 @@ export function createClothSimulation(scene, camera, onTearCallback) {
     for (let y = 0; y <= clothHeight; y++) {
       const yRatio = y / clothHeight;
       for (let x = 0; x <= clothWidth; x++, index++) {
-        // Apply tapering without new vector allocations.
+        
         const xTaper = (x / clothWidth - 0.5) * spacing * clothWidth;
         const taperedX = xTaper * (1 + yRatio * 1.5);
         const p = new Particle(taperedX, -y * spacing + offsetY, 0, damping);
 
-        // Use squared distance to avoid the cost of Math.hypot()
+        
         for (let i = 0, len = attractors.length; i < len; i++) {
           const attractor = attractors[i];
           const dx = x - attractor.x;
           const dy = y - attractor.y;
-          // Instead of dist < 10, compare squared distance (<100)
+          
           const distSq = dx * dx + dy * dy;
-          if (distSq < 100 && Math.random() > Math.sqrt(distSq) / 10) {
+          const prob = Math.sqrt(distSq) / 10;
+          if (distSq < 100 && Math.random() > prob) {
             p.pin();
-            break; // optionally break if already pinned
+            break; 
           }
         }
         particles[index] = p;
@@ -81,7 +113,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
     const mouse = new THREE.Vector2();
 
     const handleMouseDown = (e) => {
-      // Initialize audio on a user gesture if not already done.
+      
       if (!isAudioInitialized) {
         initAudio();
         isAudioInitialized = true;
@@ -98,11 +130,11 @@ export function createClothSimulation(scene, camera, onTearCallback) {
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
 
-      // Use standard for-loop for performance with large constraint arrays.
+      
       for (let i = 0, len = constraints.length; i < len; i++) {
         const c = constraints[i];
         if (!c.active) continue;
-        // Reuse the temporary vector rather than allocating a new one each time.
+        
         tempMid.addVectors(c.p1.position, c.p2.position).multiplyScalar(0.5);
         if (raycaster.ray.distanceToPoint(tempMid) < 0.5) {
           c.active = false;
@@ -118,178 +150,171 @@ export function createClothSimulation(scene, camera, onTearCallback) {
   }
 
   function regenerateConstraints() {
-    // Create a persistent quadtree instance.
+    
     const localQuadtree = new Quadtree({ x: -60, y: 60, w: 120, h: 120 });
 
-    setInterval(
-      () => {
-        if (!broken.length) return;
+    setInterval(() => {
+      const now = performance.now();
+      if (!broken.length) return;
 
-        const now = performance.now();
-        const eligible = broken.filter(
-          (b) => now - b.time >= 800 + Math.random() * 500
-        );
-        if (!eligible.length) return;
+      const eligible = broken.filter(
+        (b) => now - b.time >= 800 + Math.random() * 500
+      );
+      if (!eligible.length) return;
 
-        // First, clear and rebuild the quadtree once per interval.
-        localQuadtree.clear();
-        for (let j = 0, len = particles.length; j < len; j++) {
-          localQuadtree.insert(particles[j]);
+      
+      localQuadtree.clear();
+      for (let j = 0, len = particles.length; j < len; j++) {
+        localQuadtree.insert(particles[j]);
+      }
+
+      
+      const count = 2 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < count; i++) {
+        const b = eligible[Math.floor(Math.random() * eligible.length)];
+        if (!b) continue;
+
+        const { constraint } = b;
+        const dist = constraint.p1.position.distanceTo(constraint.p2.position);
+        if (dist > spacing * 100) continue;
+
+        const restNoise = spacing * (0.5 + Math.random() * 1.5);
+        let hue, saturation, lightness;
+
+        if (Math.random() < 0.85) {
+          hue = 0.0 + Math.random() * 0.03;
+          saturation = 0.85 + Math.random() * 0.15;
+          lightness = 0.2 + Math.random() * 0.15;
+        } else {
+          hue = 0.11 + Math.random() * 0.07;
+          saturation = 0.7 + Math.random() * 0.2;
+          lightness = 0.12 + Math.random() * 0.15;
+        }
+        const pulseColor = new THREE.Color().setHSL(hue, saturation, lightness);
+
+        Object.assign(constraint, {
+          rest: restNoise,
+          color: pulseColor.getHex(),
+          active: true,
+          createdAt: now,
+          finalScarColor: pulseColor.clone(),
+        });
+
+        
+        const jitterStrength = 0.15 + Math.random() * 0.08;
+        constraint.p1.position.x += (Math.random() - 0.5) * jitterStrength;
+        constraint.p1.position.y += (Math.random() - 0.5) * jitterStrength;
+        constraint.p1.position.z += (Math.random() - 0.5) * jitterStrength;
+        constraint.p2.position.x += (Math.random() - 0.5) * jitterStrength;
+        constraint.p2.position.y += (Math.random() - 0.5) * jitterStrength;
+        constraint.p2.position.z += (Math.random() - 0.5) * jitterStrength;
+
+        if (constraint.scarTrail) {
+          constraint.scarTrail.push({
+            time: now,
+            color: pulseColor.clone(),
+            pos1: constraint.p1.position.clone(),
+            pos2: constraint.p2.position.clone(),
+          });
         }
 
-        // Determine how many regeneration events to process for this interval.
-        const count = 2 + Math.floor(Math.random() * 4);
-        for (let i = 0; i < count; i++) {
-          const b = eligible[Math.floor(Math.random() * eligible.length)];
-          if (!b) continue;
+        broken.splice(broken.indexOf(b), 1);
+        playRegenSound({ intensity: 1, glitch: true });
 
-          const { constraint } = b;
-          const dist = constraint.p1.position.distanceTo(constraint.p2.position);
-          if (dist > spacing * 100) continue;
+        const anchor = Math.random() < 0.5 ? constraint.p1 : constraint.p2;
+        
+        const queryBox = {
+          x: anchor.position.x - 5,
+          y: anchor.position.y + 5,
+          w: 10,
+          h: 10,
+        };
+        let local = localQuadtree.query(queryBox);
+        if (local.length < 3) {
+          queryBox.x = anchor.position.x - 10;
+          queryBox.y = anchor.position.y + 10;
+          queryBox.w = 20;
+          queryBox.h = 20;
+          local = localQuadtree.query(queryBox);
+        }
 
-          const restNoise = spacing * (0.5 + Math.random() * 1.5);
-          let hue, saturation, lightness;
+        const clusters = 9 + Math.floor(Math.random() * 8);
+        for (let c = 0; c < clusters; c++) {
+          let partner =
+            Math.random() < 0.95 && local.length
+              ? local[Math.floor(Math.random() * local.length)]
+              : null;
+          if (!partner || partner === anchor || partner.pinned) continue;
 
-          if (Math.random() < 0.85) {
-            hue = 0.0 + Math.random() * 0.03;
-            saturation = 0.85 + Math.random() * 0.15;
-            lightness = 0.2 + Math.random() * 0.15;
-          } else {
-            hue = 0.11 + Math.random() * 0.07;
-            saturation = 0.7 + Math.random() * 0.2;
-            lightness = 0.12 + Math.random() * 0.15;
-          }
-          const pulseColor = new THREE.Color().setHSL(
-            hue,
-            saturation,
-            lightness
-          );
+          const baseDistance = anchor.position.distanceTo(partner.position);
+          if (baseDistance > spacing * 6) continue;
 
-          Object.assign(constraint, {
-            rest: restNoise,
-            color: pulseColor.getHex(),
-            active: true,
-            createdAt: now,
-            finalScarColor: pulseColor.clone(),
-          });
+          const lines = 5 + Math.floor(Math.random() * 6);
+          for (let j = 0; j < lines; j++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 0.02 + Math.random() * 0.25;
+            const offset = new THREE.Vector3(
+              Math.cos(angle) * radius,
+              Math.sin(angle) * radius,
+              (Math.random() - 0.5) * 0.4
+            );
 
-          // Apply a small random jitter to the positions.
-          const jitterStrength = 0.15 + Math.random() * 0.08;
-          constraint.p1.position.x += (Math.random() - 0.5) * jitterStrength;
-          constraint.p1.position.y += (Math.random() - 0.5) * jitterStrength;
-          constraint.p1.position.z += (Math.random() - 0.5) * jitterStrength;
-          constraint.p2.position.x += (Math.random() - 0.5) * jitterStrength;
-          constraint.p2.position.y += (Math.random() - 0.5) * jitterStrength;
-          constraint.p2.position.z += (Math.random() - 0.5) * jitterStrength;
+            const noisy = {
+              position: partner.position.clone().add(offset),
+              pinned: false,
+            };
 
-          if (constraint.scarTrail) {
-            constraint.scarTrail.push({
-              time: now,
-              color: pulseColor.clone(),
-              pos1: constraint.p1.position.clone(),
-              pos2: constraint.p2.position.clone(),
-            });
-          }
+            const d = anchor.position.distanceTo(noisy.position);
+            const scarColor = new THREE.Color().setHSL(
+              Math.random(),
+              1,
+              0.03 + Math.random() * 0.07
+            );
+            const stiffness = 0.07 + Math.random() * 0.2;
+            const newConstraint = new Constraint(
+              anchor,
+              noisy,
+              d,
+              stiffness,
+              scarColor.getHex()
+            );
+            newConstraint.createdAt = now;
+            newConstraint.finalScarColor = scarColor.clone();
 
-          broken.splice(broken.indexOf(b), 1);
-          playRegenSound({ intensity: 1, glitch: true });
+            if (constraints.length < 70000) constraints.push(newConstraint);
 
-          const anchor = Math.random() < 0.5 ? constraint.p1 : constraint.p2;
-          // Query the rebuilt quadtree for local neighbors.
-          let local = localQuadtree.query({
-            x: anchor.position.x - 5,
-            y: anchor.position.y + 5,
-            w: 10,
-            h: 10,
-          });
-          if (local.length < 3) {
-            local = localQuadtree.query({
-              x: anchor.position.x - 10,
-              y: anchor.position.y + 10,
-              w: 20,
-              h: 20,
-            });
-          }
-
-          const clusters = 9 + Math.floor(Math.random() * 8);
-          for (let c = 0; c < clusters; c++) {
-            let partner =
-              Math.random() < 0.95 && local.length
-                ? local[Math.floor(Math.random() * local.length)]
-                : null;
-            if (!partner || partner === anchor || partner.pinned) continue;
-
-            const baseDistance = anchor.position.distanceTo(partner.position);
-            if (baseDistance > spacing * 6) continue;
-
-            const lines = 5 + Math.floor(Math.random() * 6);
-            for (let j = 0; j < lines; j++) {
-              const angle = Math.random() * Math.PI * 2;
-              const radius = 0.02 + Math.random() * 0.25;
-              const offset = new THREE.Vector3(
-                Math.cos(angle) * radius,
-                Math.sin(angle) * radius,
-                (Math.random() - 0.5) * 0.4
-              );
-
-              const noisy = {
-                position: partner.position.clone().add(offset),
-                pinned: false,
-              };
-
-              const d = anchor.position.distanceTo(noisy.position);
-              const scarColor = new THREE.Color().setHSL(
-                Math.random(),
-                1,
-                0.03 + Math.random() * 0.07
-              );
-              const stiffness = 0.07 + Math.random() * 0.2;
-              const newConstraint = new Constraint(
-                anchor,
-                noisy,
-                d,
-                stiffness,
-                scarColor.getHex()
-              );
-              newConstraint.createdAt = now;
-              newConstraint.finalScarColor = scarColor.clone();
-
-              if (constraints.length < 70000) constraints.push(newConstraint);
-
-              if (Math.random() < 0.7 && local.length > 2) {
-                const loop = local[Math.floor(Math.random() * local.length)];
-                if (loop !== partner && loop !== anchor) {
-                  const loopD = anchor.position.distanceTo(loop.position);
-                  const loopColor = new THREE.Color().setHSL(
-                    Math.random(),
-                    1,
-                    0.05 + Math.random() * 0.1
-                  );
-                  const loopConstraint = new Constraint(
-                    anchor,
-                    loop,
-                    loopD,
-                    stiffness,
-                    loopColor.getHex()
-                  );
-                  loopConstraint.createdAt = now;
-                  loopConstraint.finalScarColor = loopColor.clone();
-                  constraints.push(loopConstraint);
-                }
+            if (Math.random() < 0.7 && local.length > 2) {
+              const loop = local[Math.floor(Math.random() * local.length)];
+              if (loop !== partner && loop !== anchor) {
+                const loopD = anchor.position.distanceTo(loop.position);
+                const loopColor = new THREE.Color().setHSL(
+                  Math.random(),
+                  1,
+                  0.05 + Math.random() * 0.1
+                );
+                const loopConstraint = new Constraint(
+                  anchor,
+                  loop,
+                  loopD,
+                  stiffness,
+                  loopColor.getHex()
+                );
+                loopConstraint.createdAt = now;
+                loopConstraint.finalScarColor = loopColor.clone();
+                constraints.push(loopConstraint);
               }
             }
           }
         }
-      },
-      50 + Math.random() * 60
-    );
+      }
+    }, 50 + Math.random() * 60);
   }
 
   createParticlesAndConstraints();
   setupMouseInteraction();
   regenerateConstraints();
 
-  // === Geometry and Buffer Attributes Initialization ===
+  
   const maxSegments = totalParticles * 4;
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(maxSegments * 2 * 3);
@@ -299,7 +324,10 @@ export function createClothSimulation(scene, camera, onTearCallback) {
 
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  geometry.setAttribute("finalColor", new THREE.BufferAttribute(finalColors, 3));
+  geometry.setAttribute(
+    "finalColor",
+    new THREE.BufferAttribute(finalColors, 3)
+  );
   geometry.setAttribute("age", new THREE.BufferAttribute(ages, 1));
 
   const material = new THREE.ShaderMaterial({
@@ -309,7 +337,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
     vertexColors: true,
     transparent: true,
     depthWrite: false,
-    // Optionally add: usage: THREE.DynamicDrawUsage
+    
   });
 
   const mesh = new THREE.LineSegments(geometry, material);
@@ -317,25 +345,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
   mesh.castShadow = true;
   scene.add(mesh);
 
-  const shadowGeo = new THREE.PlaneGeometry(
-    clothWidth * spacing,
-    clothHeight * spacing,
-    20,
-    20
-  );
-  const shadowMat = new THREE.MeshStandardMaterial({
-    color: 0x000000,
-    transparent: true,
-    opacity: 0.15,
-  });
-  const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
-  shadowMesh.rotation.x = -Math.PI / 2;
-  shadowMesh.position.y = offsetY - (clothHeight * spacing) / 2;
-  shadowMesh.castShadow = true;
-  shadowMesh.receiveShadow = true;
-  scene.add(shadowMesh);
-
-  // Automatically initialize audio and play background sound when the cloth simulation is created.
+  
   initAudio()
     .then(() => {
       playBgSound();
@@ -344,26 +354,21 @@ export function createClothSimulation(scene, camera, onTearCallback) {
       console.error("Failed to initialize audio:", err);
     });
 
-  // === Return the Simulation Interface ===
-  // Preallocate temporary variables for update to avoid per-iteration allocations.
+  
+  
   const tempPos = new THREE.Vector3();
   const color = new THREE.Color();
   const finalColor = new THREE.Color();
-  // Reuse a quadtree instance in the update loop.
-  let simulationQuadtree = new Quadtree({ x: -40, y: 60, w: 80, h: 80 });
+  
+  const simulationQuadtree = new Quadtree({ x: -40, y: 60, w: 80, h: 80 });
 
   return {
     mesh,
-    shadowMesh,
     update() {
       const now = performance.now();
       material.uniforms.time.value = now * 0.001;
 
-      if (simulationQuadtree.clear) {
-        simulationQuadtree.clear();
-      } else {
-        simulationQuadtree = new Quadtree({ x: -40, y: 60, w: 80, h: 80 });
-      }
+      simulationQuadtree.clear();
 
       for (let i = 0, len = particles.length; i < len; i++) {
         const p = particles[i];
@@ -372,7 +377,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
         simulationQuadtree.insert(p);
       }
 
-      for (let iter = 0; iter < 5; iter++) {
+      for (let iter = 0; iter < 7; iter++) {
         for (let i = 0, clen = constraints.length; i < clen; i++) {
           constraints[i].satisfy();
         }

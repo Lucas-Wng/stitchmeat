@@ -59,7 +59,7 @@ export class Quadtree {
     return found;
   }
 
-  // New: Clear this quadtree instance for reuse.
+  
   clear() {
     this.particles.length = 0;
     if (this.divided) {
