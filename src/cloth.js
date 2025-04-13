@@ -138,7 +138,7 @@ export function createClothSimulation(scene, camera, onTearCallback) {
         if (!c.active) continue;
         
         tempMid.addVectors(c.p1.position, c.p2.position).multiplyScalar(0.5);
-        if (raycaster.ray.distanceToPoint(tempMid) < 0.5) {
+        if (raycaster.ray.distanceToPoint(tempMid) < 0.35) {
           c.active = false;
           if (!broken.some((b) => b.constraint === c)) {
             broken.push({ constraint: c, time: performance.now() });

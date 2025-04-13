@@ -10,7 +10,7 @@ export function setupLighting(scene, renderer) {
   renderer.toneMappingExposure = 1.15;
 
   
-  const ambientLight = new THREE.AmbientLight(0xc6d8ff, 1.8);
+  const ambientLight = new THREE.AmbientLight(0xc6d8ff, 0.3);
   scene.add(ambientLight);
 
   const hemiLight = new THREE.HemisphereLight(0xc6d8ff, 0x444444, 0.5);
@@ -18,7 +18,7 @@ export function setupLighting(scene, renderer) {
   scene.add(hemiLight);
 
   
-  const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.3);
   keyLight.position.set(0, 100, 40);
   keyLight.target.position.set(0, 0, 0);
   keyLight.castShadow = true;
@@ -33,7 +33,7 @@ export function setupLighting(scene, renderer) {
   scene.add(keyLight.target);
 
   
-  const bottomUpLight = new THREE.DirectionalLight(0x8faaff, 1.5);
+  const bottomUpLight = new THREE.DirectionalLight(0x8faaff, 0.8);
   bottomUpLight.position.set(0, -20, 40);
   bottomUpLight.target.position.set(0, 50, -150);
   bottomUpLight.castShadow = true;
@@ -48,7 +48,7 @@ export function setupLighting(scene, renderer) {
   scene.add(bottomUpLight.target);
 
   
-  const sideSpotLeft = new THREE.SpotLight(0xfff4e5, 1.2, 300, Math.PI / 7, 0.3, 1);
+  const sideSpotLeft = new THREE.SpotLight(0xfff4e5, 1.0, 300, Math.PI / 7, 0.3, 1);
   sideSpotLeft.position.set(-100, 80, 0);
   sideSpotLeft.target.position.set(0, 40, 0);
   sideSpotLeft.castShadow = true;
@@ -56,7 +56,7 @@ export function setupLighting(scene, renderer) {
   scene.add(sideSpotLeft);
   scene.add(sideSpotLeft.target);
 
-  const sideSpotRight = new THREE.SpotLight(0xfff4e5, 1.2, 300, Math.PI / 7, 0.3, 1);
+  const sideSpotRight = new THREE.SpotLight(0xfff4e5, 1.0, 300, Math.PI / 7, 0.3, 1);
   sideSpotRight.position.set(100, 80, 0);
   sideSpotRight.target.position.set(0, 40, 0);
   sideSpotRight.castShadow = true;

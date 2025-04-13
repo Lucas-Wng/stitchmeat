@@ -100,7 +100,7 @@ let tearCount = 0;
 
 
 const cloth = createClothSimulation(scene, camera, () => {
-  
+  tearCount ++;
   spawnRandomBloodSplatter(scene, clock);
 });
 
@@ -122,7 +122,7 @@ function animate() {
 
   
   if (tearCount > 0 && elapsed > nextFlickerTime && !isFlickering) {
-    const flickerProbability = Math.min(0.3 * tearCount, 1.0);
+    const flickerProbability = Math.min(0.0003 * tearCount, 1.0);
     if (Math.random() < flickerProbability) {
       isFlickering = true;
       flickerDuration = Math.random() * 0.2 + 0.1;

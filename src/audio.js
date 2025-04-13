@@ -63,11 +63,11 @@ function playBuffer(buffer, pitchRange = 0.3, volume = 1) {
 
 
 export function playTearSound() {
-  playBuffer(tearBuffer, 0.2, 0.1);
+  playBuffer(tearBuffer, 0.2, 0.05);
 }
 
 export function playRegenSound() {
-  playBuffer(regenBuffer, 0.3, 0.1);
+  playBuffer(regenBuffer, 0.3, 0.05);
 }
 
 function makeDistortionCurve(amount) {
