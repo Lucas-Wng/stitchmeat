@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import wallTextureUrl from '/textures/concretewall.jpg';
+import woodTextureUrl from '/textures/woodfloor.jpg';
 
 export function createWalls(scene) {
     const textureLoader = new THREE.TextureLoader();
     
-    const wallTexture = textureLoader.load('/textures/concretewall.jpg', texture => {
+    const wallTexture = textureLoader.load(wallTextureUrl, texture => {
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
       texture.repeat.set(2, 2);
@@ -53,7 +55,7 @@ export function createGround(scene) {
   const textureLoader = new THREE.TextureLoader();
   
   
-  const groundTexture = textureLoader.load('/textures/woodfloor.jpg', texture => {
+  const groundTexture = textureLoader.load(woodTextureUrl, texture => {
     
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;

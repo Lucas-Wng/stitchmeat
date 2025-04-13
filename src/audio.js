@@ -1,3 +1,7 @@
+import tearSoundUrl from '/sounds/tear.mp3';
+import regenSoundUrl from '/sounds/regen.mp3';
+import bgSoundUrl from '/sounds/yeule.mp3';
+
 let audioContext;
 let tearBuffer = null;
 let regenBuffer = null;
@@ -13,26 +17,25 @@ let tearCount = 0;
 
 export async function initAudio() {
   if (isInitialized) return;
-  isInitialized = true;
 
-  
+  // Defer creating context until now
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  
-  
+
+  // Resume inside a gesture (some browsers need this)
   if (audioContext.state === 'suspended') {
     await audioContext.resume();
   }
 
-  
+  isInitialized = true;
+
   masterGainNode = audioContext.createGain();
   masterGainNode.gain.value = 0.5;
   masterGainNode.connect(audioContext.destination);
 
-  
   const [tearData, regenData, bgData] = await Promise.all([
-    fetch("/sounds/tear.mp3").then((res) => res.arrayBuffer()),
-    fetch("/sounds/regen.mp3").then((res) => res.arrayBuffer()),
-    fetch("/sounds/yeule.mp3").then((res) => res.arrayBuffer()),
+    fetch(tearSoundUrl).then((res) => res.arrayBuffer()),
+    fetch(regenSoundUrl).then((res) => res.arrayBuffer()),
+    fetch(bgSoundUrl).then((res) => res.arrayBuffer()),
   ]);
 
   [tearBuffer, regenBuffer, bgBuffer] = await Promise.all([
@@ -115,7 +118,9 @@ export function distortBgSound() {
 
 
 
-export function playBgSound() {
+export async function playBgSound() {
+  await audioContext.resume();
+  
   if (!audioContext || !bgBuffer) return;
 
   

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-
+import bloodTextureUrl from '/textures/blood.png';
 
 export const bloodSplats = [];
 
@@ -8,7 +8,7 @@ let bloodMaterialBase;
 
 export function setupBlood() {
   const bloodTexture = new THREE.TextureLoader().load(
-    "/textures/f0e7b87a9b21de37e1723ce62fc416d8.png",
+    bloodTextureUrl,
     (texture) => {
       texture.wrapS = THREE.ClampToEdgeWrapping;
       texture.wrapT = THREE.ClampToEdgeWrapping;

@@ -115,7 +115,9 @@ export function createClothSimulation(scene, camera, onTearCallback) {
     const handleMouseDown = (e) => {
       
       if (!isAudioInitialized) {
-        initAudio();
+        initAudio().then(() => {
+          playBgSound();
+        });
         isAudioInitialized = true;
       }
       isMouseDown = true;
@@ -345,17 +347,6 @@ export function createClothSimulation(scene, camera, onTearCallback) {
   mesh.castShadow = true;
   scene.add(mesh);
 
-  
-  initAudio()
-    .then(() => {
-      playBgSound();
-    })
-    .catch((err) => {
-      console.error("Failed to initialize audio:", err);
-    });
-
-  
-  
   const tempPos = new THREE.Vector3();
   const color = new THREE.Color();
   const finalColor = new THREE.Color();
