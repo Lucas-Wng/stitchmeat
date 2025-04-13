@@ -83,8 +83,8 @@ const labelMesh = new THREE.Mesh(
 );
 
 
-labelMesh.position.set(25, -29, 34);
-labelMesh.rotation.set(THREE.MathUtils.degToRad(-30), 0, 0);
+labelMesh.position.set(25, -29, 35);
+labelMesh.rotation.set(THREE.MathUtils.degToRad(-20), 0, 0);
 labelMesh.renderOrder = 1;
 
 labelMesh.castShadow = true;
