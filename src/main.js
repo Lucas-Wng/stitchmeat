@@ -121,7 +121,7 @@ function animate() {
 
   
   if (tearCount > 0 && elapsed > nextFlickerTime && !isFlickering) {
-    const flickerProbability = Math.min(0.0003 * tearCount, 1.0);
+    const flickerProbability = Math.min(0.00005 * tearCount, 1.0);
     if (Math.random() < flickerProbability) {
       isFlickering = true;
       flickerDuration = Math.random() * 0.2 + 0.1;
