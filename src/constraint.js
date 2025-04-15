@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export class Constraint {
-  constructor(p1, p2, rest, stiffness, color = 0x593c7d) {
+  constructor(p1, p2, rest, stiffness, color = 0x000000) {
     this.p1 = p1;
     this.p2 = p2;
     this.rest = rest;

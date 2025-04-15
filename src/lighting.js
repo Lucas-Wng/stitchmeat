@@ -5,15 +5,15 @@ export function setupLighting(scene, renderer) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
 
   
-  const ambientLight = new THREE.AmbientLight(0xc6d8ff, 0.3);
+  const ambientLight = new THREE.AmbientLight(0xc6d8ff, 0.8); 
   scene.add(ambientLight);
 
-  const hemiLight = new THREE.HemisphereLight(0xc6d8ff, 0x444444, 0.5);
+  
+  const hemiLight = new THREE.HemisphereLight(0xc6d8ff, 0x888888, 1.0);
   hemiLight.position.set(0, 100, 0);
   scene.add(hemiLight);
 
@@ -65,9 +65,30 @@ export function setupLighting(scene, renderer) {
   scene.add(sideSpotRight.target);
 
   
-  const fillLight = new THREE.DirectionalLight(0xc6d8ff, 0.5);
-  fillLight.position.set(0, 60, -60);
-  scene.add(fillLight);
+  const sideFillLightLeft = new THREE.DirectionalLight(0xc6d8ff, 0.4);
+  sideFillLightLeft.position.set(-120, 80, 50);
+  sideFillLightLeft.target.position.set(0, 40, 0);
+  scene.add(sideFillLightLeft);
+  scene.add(sideFillLightLeft.target);
+
+  const sideFillLightRight = new THREE.DirectionalLight(0xc6d8ff, 0.4);
+  sideFillLightRight.position.set(120, 80, 50);
+  sideFillLightRight.target.position.set(0, 40, 0);
+  scene.add(sideFillLightRight);
+  scene.add(sideFillLightRight.target);
+
+  
+  const overheadLight = new THREE.DirectionalLight(0xffffff, 0.3);
+  overheadLight.position.set(0, 150, 0);
+  overheadLight.target.position.set(0, 0, 0);
+  overheadLight.castShadow = true;
+  overheadLight.shadow.mapSize.set(1024, 1024);
+  overheadLight.shadow.camera.left = -100;
+  overheadLight.shadow.camera.right = 100;
+  overheadLight.shadow.camera.top = 100;
+  overheadLight.shadow.camera.bottom = -100;
+  scene.add(overheadLight);
+  scene.add(overheadLight.target);
 
   
   const centerLight = new THREE.PointLight(0xc6d8ff, 0.8, 200);
@@ -90,4 +111,7 @@ export function setupLighting(scene, renderer) {
   scene.userData.keyLight = keyLight;
   scene.userData.spotLeft = sideSpotLeft;
   scene.userData.spotRight = sideSpotRight;
+  scene.userData.sideFillLeft = sideFillLightLeft;
+  scene.userData.sideFillRight = sideFillLightRight;
+  scene.userData.overheadLight = overheadLight;
 }

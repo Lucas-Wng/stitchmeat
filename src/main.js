@@ -109,7 +109,6 @@ let nextFlickerTime = 0;
 let isFlickering = false;
 let flickerDuration = 0;
 let flickerStartTime = 0;
-const baseIntensity = 2.3; 
 
 const keyLight = scene.userData.keyLight;
 
@@ -130,17 +129,35 @@ function animate() {
     }
     nextFlickerTime = elapsed + Math.random() * (0.4 / tearCount) + (0.1 / tearCount);
   }
+  
+  let flickerFactor = 1;
   if (isFlickering) {
     const progress = (elapsed - flickerStartTime) / flickerDuration;
-    const flickerFactor = 0.2 + Math.abs(Math.sin(progress * Math.PI));
-    keyLight.intensity = baseIntensity * flickerFactor;
+    flickerFactor = 0.2 + Math.abs(Math.sin(progress * Math.PI));
     if (progress >= 1) {
       isFlickering = false;
-      keyLight.intensity = baseIntensity;
+      flickerFactor = 1;
     }
-  } else {
-    keyLight.intensity = baseIntensity;
   }
+  const decreaseFactor = Math.max(0, 1 - tearCount * 0.01);
+  const flickeringLights = [
+    scene.userData.keyLight,
+    scene.userData.spotLeft,
+    scene.userData.spotRight,
+    scene.userData.sideFillLeft,
+    scene.userData.sideFillRight,
+    scene.userData.overheadLight
+  ];
+  flickeringLights.forEach(light => {
+    if (!light.userData.baseIntensity) {
+      light.userData.baseIntensity = light.intensity;
+    }
+    if (isFlickering) {
+      light.intensity = light.userData.baseIntensity * flickerFactor;
+    } else {
+      light.intensity = light.userData.baseIntensity * decreaseFactor;
+    }
+  });
 
   
   cloth.update();
