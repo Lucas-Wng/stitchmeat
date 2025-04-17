@@ -139,7 +139,7 @@ function animate() {
       flickerFactor = 1;
     }
   }
-  const decreaseFactor = Math.max(0, 1 - tearCount * 0.01);
+  const decreaseFactor = Math.max(0, 1 - tearCount * 0.001);
   const flickeringLights = [
     scene.userData.keyLight,
     scene.userData.spotLeft,
