@@ -8,3 +8,4 @@ stitchmeat
 * three.js for 3d rendering
 
 https://lucas-wng.github.io/stitchmeat/
+(chrome is better for performance)
