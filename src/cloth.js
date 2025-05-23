@@ -13,8 +13,8 @@ import vertexShader from "./shaders/cloth_vertex.glsl?raw";
 import fragmentShader from "./shaders/cloth_fragment.glsl?raw";
 
 export function createClothSimulation(scene, camera, onTearCallback) {
-  const clothWidth = 500,
-    clothHeight = 130,
+  const clothWidth = 250,
+    clothHeight = 80,
     spacing = 0.2;
   const gravity = new THREE.Vector3(0, -0.07, 0);
   const stiffness = 1.0,
