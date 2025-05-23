@@ -14,7 +14,7 @@ import fragmentShader from "./shaders/cloth_fragment.glsl?raw";
 
 export function createClothSimulation(scene, camera, onTearCallback) {
   const clothWidth = 250,
-    clothHeight = 80,
+    clothHeight = 100,
     spacing = 0.2;
   const gravity = new THREE.Vector3(0, -0.07, 0);
   const stiffness = 1.0,
@@ -29,34 +29,10 @@ export function createClothSimulation(scene, camera, onTearCallback) {
   const offsetY = (clothHeight * spacing) / 2 + 40;
 
   const attractors = [
-    { x: 60, y: 70 },
     { x: 70, y: 10 },
-    { x: 250, y: 15 },
-    { x: 430, y: 12 },
-    { x: 170, y: 45 },
-    { x: 330, y: 59 },
-    { x: 440, y: 68 },
-    { x: 60, y: 71 },
-    { x: 70, y: 11 },
-    { x: 250, y: 16 },
-    { x: 430, y: 13 },
-    { x: 170, y: 46 },
-    { x: 330, y: 60 },
-    { x: 440, y: 69 },
-    { x: 60, y: 69 },
-    { x: 70, y: 9 },
-    { x: 250, y: 14 },
-    { x: 430, y: 11 },
-    { x: 170, y: 44 },
-    { x: 330, y: 58 },
-    { x: 440, y: 67 },
-    { x: 60, y: 68 },
-    { x: 70, y: 8 },
-    { x: 250, y: 13 },
-    { x: 430, y: 10 },
-    { x: 170, y: 43 },
-    { x: 330, y: 57 },
-    { x: 440, y: 66 },
+    { x: 250, y: 50 },
+    { x: 30, y: 60 },
+    { x: 170, y: 20 },
   ];
   for (let i = 0; i < attractors.length; i++) {
     const a = attractors[i];
