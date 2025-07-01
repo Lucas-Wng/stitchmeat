@@ -8,7 +8,6 @@ stitchmeat
 * three.js for 3d rendering
 
 ![normal](./images/normal.png)
-![ripped](./images/ripped.png)
 
 https://lucas-wng.github.io/stitchmeat/
 (chrome is better for performance)
